@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Env to JSON Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Convert .env to JSON and back</h1>
+    <textarea id="inputEnv" placeholder="Paste .env content here"></textarea>
+    <button onclick="convertToJson()">Convert to JSON</button>
+    <button onclick="copyToClipboard('outputJson')">Copy JSON</button>
+    <pre id="outputJson"></pre>
+    
+    <textarea id="inputJson" placeholder="Paste JSON content here"></textarea>
+    <button onclick="convertToEnv()">Convert to .env</button>
+    <button onclick="copyToClipboard('outputEnv')">Copy .env</button>
+    <pre id="outputEnv"></pre>
+
+    <script>
+        function convertToJson() {
+            const input = document.getElementById('inputEnv').value;
+            const envVars = {};
+            input.split('\n').forEach(line => {
+                if (line.trim() && !line.startsWith('#') && line.includes('=')) {
+                    let [key, ...rest] = line.split('=');
+                    key = key.trim();
+                    let value = rest.join('=').trim();
+
+                    // Remove inline comments
+                    if (value.includes('#')) {
+                        value = value.split('#')[0].trim();
+                    }
+
+                    // Remove surrounding quotes if present
+                    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                        value = value.slice(1, -1);
+                    }
+
+                    if (value.toLowerCase() === "true") {
+                        envVars[key] = true;
+                    } else if (value.toLowerCase() === "false") {
+                        envVars[key] = false;
+                    } else if (value.toLowerCase() === "null") {
+                        envVars[key] = null;
+                    } else if (value.trim() === "") {
+                        envVars[key] = ""; // Set empty string if value is empty
+                    } else if (!isNaN(value)) {
+                        envVars[key] = Number(value);
+                    } else {
+                        envVars[key] = value;
+                    }
+                }
+            });
+            document.getElementById('outputJson').textContent = JSON.stringify(envVars, null, 2);
+        }
+
+        function convertToEnv() {
+            const input = document.getElementById('inputJson').value;
+            let json;
+            try {
+                json = JSON.parse(input);
+            } catch (e) {
+                alert('Invalid JSON');
+                return;
+            }
+            const envVars = Object.keys(json).map(key => {
+                let value = json[key];
+                if (value === null) {
+                    value = "null";
+                } else if (typeof value === "boolean") {
+                    value = value.toString();
+                } else if (typeof value === "number") {
+                    value = value.toString();
+                } else if (value === "") {
+                    value = "";
+                } else if (/\s/.test(value) || /[<>,;&()$]/.test(value) || value.includes("@")) {
+                    value = `"${value}"`;
+                } else if (/\${.*}/.test(value)) {
+                    value = `"${value}"`;
+                }
+                return `${key}=${value}`;
+            }).join('\n');
+            document.getElementById('outputEnv').textContent = envVars;
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const range = document.createRange();
+            range.selectNode(element);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand("copy");
+            window.getSelection().removeAllRanges();
+            alert(`Copied ${elementId} to clipboard`);
+        }
+    </script>
+</body>
+</html>
