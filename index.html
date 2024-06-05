@@ -42,8 +42,8 @@
                     key = key.trim();
                     let value = rest.join('=').trim();
 
-                    // Remove inline comments
-                    if (value.includes('#')) {
+                    // Remove inline comments if outside quotes
+                    if (value.includes('#') && !(value.startsWith('"') && value.endsWith('"'))) {
                         value = value.split('#')[0].trim();
                     }
 
@@ -58,7 +58,7 @@
                         envVars[key] = false;
                     } else if (value.toLowerCase() === "null") {
                         envVars[key] = null;
-                    } else if (value.trim() === "") {
+                    } else if (value === "") {
                         envVars[key] = ""; // Set empty string if value is empty
                     } else if (!isNaN(value)) {
                         envVars[key] = Number(value);
@@ -89,10 +89,13 @@
                     value = value.toString();
                 } else if (value === "") {
                     value = "";
-                } else if (/\s/.test(value) || /[<>,;&()$]/.test(value) || value.includes("@")) {
-                    value = `"${value}"`;
-                } else if (/\${.*}/.test(value)) {
-                    value = `"${value}"`;
+                } else {
+                    // Wrap in quotes if contains spaces or special characters
+                    if (/\s/.test(value) || /[<>,;&()$]/.test(value) || value.includes("@")) {
+                        value = `"${value}"`;
+                    } else if (/\${.*}/.test(value)) {
+                        value = `"${value}"`;
+                    }
                 }
                 return `${key}=${value}`;
             }).join('\n');
