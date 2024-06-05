@@ -39,7 +39,7 @@
             input.split('\n').forEach(line => {
                 if (line.trim() && !line.startsWith('#') && line.includes('=')) {
                     let [key, ...rest] = line.split('=');
-                    key = key.trim();
+                    key = key.trim().replace(/\s+/g, ''); // Remove spaces from key
                     let value = rest.join('=').trim();
 
                     // Remove inline comments if outside quotes
@@ -81,13 +81,14 @@
             }
             const envVars = Object.keys(json).map(key => {
                 let value = json[key];
+                key = key.replace(/\s+/g, ''); // Remove spaces from key
                 if (value === null) {
                     value = "null";
                 } else if (typeof value === "boolean") {
                     value = value.toString();
                 } else if (typeof value === "number") {
                     value = value.toString();
-                } else if (value === "") {
+                } else if (value.trim() === "") { // Trim and check for empty string
                     value = "";
                 } else {
                     // Wrap in quotes if contains spaces or special characters
